@@ -17,22 +17,26 @@ editor. Then follow the directions below to ensure your computer is properly set
 
 ### SAS
 - Open mean.sas and run the entire script.
-- Output should:
-    - Generate output in the Results Viewer that consists of a data set with the columns B, SANDWICH, SE, lcl, and ucl.
-    The values should be 8, 13.6, 3.68782, 0.77188, and 15.2281, respectively.
-    - No errors should be produced in the log file.
+
+Output should:
+- Generate output in the Results Viewer that consists of a data set with the columns B, SANDWICH, SE, lcl, and ucl.
+The values should be 8, 13.6, 3.68782, 0.77188, and 15.2281, respectively.
+- No errors should be produced in the log file.
 
 ### R
 - Install the following libraries:
     - numDeriv, geex
 - Open mean.R and run the entire script
-- Output should:
+
+Output should:
+
 ```Estimated mean
 Closed-form: 8.000
 Root-finder: 8.000
 95% CI: [ 0.772 15.228]
 Geex:    [8.000]
 95% CI:  [ 0.772 15.228]```
+
 - No errors should be produced.
 
 ### Python
@@ -40,12 +44,15 @@ Geex:    [8.000]
     - NumPy, SciPy, pandas, statsmodels, delicatessen
     - The version of SciPy must be at least 1.9.0 for the provided code to function properly
 - Open mean.py (or mean.ipynb) and run the entire script
-- Output should be:
+
+Output should be:
+
 ```Closed-form: 8.0
 Root-finder: 8.0
 95% CI: [ 0.772 15.228]
 Deli:    [8.]
 95% CI:  [[ 0.772 15.228]]```
+
 - No errors should be produced.
 
 If you have problems or encounter errors, please open an issue on the GitHub page or email me at pzivich@unc.edu
