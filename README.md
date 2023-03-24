@@ -4,6 +4,8 @@ Materials for the SER 2023 "ABC's of M-estimation" workshop with support for SAS
 
 Materials and workshop created by: Paul Zivich, Rachael Ross, Stephen Cole
 
+[![DOI](https://zenodo.org/badge/618596455.svg)](https://zenodo.org/badge/latestdoi/618596455)
+
 -----------
 
 ## Before the workshop
