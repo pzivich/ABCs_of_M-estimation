@@ -30,12 +30,14 @@ The values should be 8, 13.6, 3.68782, 0.77188, and 15.2281, respectively.
 
 Output should:
 
-```Estimated mean
+```
+Estimated mean
 Closed-form: 8.000
 Root-finder: 8.000
 95% CI: [ 0.772 15.228]
 Geex:    [8.000]
-95% CI:  [ 0.772 15.228]```
+95% CI:  [ 0.772 15.228]
+```
 
 - No errors should be produced.
 
@@ -47,11 +49,13 @@ Geex:    [8.000]
 
 Output should be:
 
-```Closed-form: 8.0
+```
+Closed-form: 8.0
 Root-finder: 8.0
 95% CI: [ 0.772 15.228]
 Deli:    [8.]
-95% CI:  [[ 0.772 15.228]]```
+95% CI:  [[ 0.772 15.228]]
+```
 
 - No errors should be produced.
 
