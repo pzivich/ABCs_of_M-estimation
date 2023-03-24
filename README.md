@@ -27,13 +27,13 @@ editor. Then follow the directions below to ensure your computer is properly set
     - numDeriv, geex
 - Open mean.R and run the entire script
 - Output should:
-    - ```Estimated mean
-    Closed-form: 8.000
-    Root-finder: 8.000
-    95% CI: [ 0.772 15.228]
-    Geex:    [8.000]
-    95% CI:  [ 0.772 15.228]```
-    - No errors should be produced.
+```Estimated mean
+Closed-form: 8.000
+Root-finder: 8.000
+95% CI: [ 0.772 15.228]
+Geex:    [8.000]
+95% CI:  [ 0.772 15.228]```
+- No errors should be produced.
 
 ### Python
 - Install the following libraries:
@@ -41,11 +41,11 @@ editor. Then follow the directions below to ensure your computer is properly set
     - The version of SciPy must be at least 1.9.0 for the provided code to function properly
 - Open mean.py (or mean.ipynb) and run the entire script
 - Output should be:
-    - ```Closed-form: 8.0
-    Root-finder: 8.0
-    95% CI: [ 0.772 15.228]
-    Deli:    [8.]
-    95% CI:  [[ 0.772 15.228]]```
-    - No errors should be produced.
+```Closed-form: 8.0
+Root-finder: 8.0
+95% CI: [ 0.772 15.228]
+Deli:    [8.]
+95% CI:  [[ 0.772 15.228]]```
+- No errors should be produced.
 
 If you have problems or encounter errors, please open an issue on the GitHub page or email me at pzivich@unc.edu
