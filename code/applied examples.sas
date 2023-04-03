@@ -274,8 +274,8 @@ PROC IML;
 
 	START efunc(theta) global(ptb, anemia, bp, n);							
 		pscore = 1 / (1 + exp(-(theta[1] + theta[2]*bp)));	
-		ef_1 = ptb - pscore;
-		ef_2 = (ptb - pscore)#bp;
+		ef_1 = anemia - pscore;
+		ef_2 = (anemia - pscore)#bp;
 
 		wt = anemia/pscore + (1-anemia)/(1-pscore);
 		ef_r1 = anemia#wt#ptb - theta[3];

@@ -209,12 +209,13 @@ geex_ef2B <- function(data){
     delta <- theta[5:6]
     
     pscore <- plogis(alpha[1] + alpha[2]*bp)
-    wt <- anemia/pscore + (1-anemia)/(1-pscore)
+    ef_1 <- (anemia - pscore)
+    ef_2 <- (anemia - pscore)*bp
     
-    ef_1 <- (ptb - pscore)
-    ef_2 <- (ptb - pscore)*bp
+    wt <- anemia/pscore + (1-anemia)/(1-pscore)
     ef_r1 <- anemia*wt*ptb - mu[1]
     ef_r0 <- (1 - anemia)*wt*ptb - mu[2]
+    
     ef_rd <- mu[1] - mu[2] - delta[1]
     ef_lnrr <- log(mu[1]/mu[2]) - delta[2]
     return(c(ef_1,ef_2,ef_r1,ef_r0,ef_rd,ef_lnrr))
