@@ -145,9 +145,9 @@ print("By-hand:     ", beta_mest)
 print("Delicatessen:", beta_deli)
 
 print("Variance Estimates")
-print("MLE:         ", sigma_mle)
-print("By-hand:     ", sigma_mest)
-print("Delicatessen:", sigma_deli)
+print("MLE:         ", sigma_mle ** 0.5)
+print("By-hand:     ", sigma_mest ** 0.5)
+print("Delicatessen:", sigma_deli ** 0.5)
 print("")
 
 ############################################################################################
@@ -157,7 +157,7 @@ print("")
 d1 = d.copy()
 d1['X'] = 1
 d0 = d.copy()
-d1['X'] = 0
+d0['X'] = 0
 
 ############################################
 # Using delicatessen
@@ -338,14 +338,14 @@ print("")
 # Delicatessen: [0.01484041 0.0777204  0.05652963]
 #
 # 2a: Causal parameters -- g-computation
-# Risk 1:          0.14
+# Risk 1:          0.154
+# 95% CI:          [0.089 0.22 ]
+# Risk 0:          0.14
 # 95% CI:          [0.114 0.165]
-# Risk 0:          0.142
-# 95% CI:          [0.118 0.165]
-# Risk Difference: -0.002
-# 95% CI:          [-0.012  0.008]
-# Risk Ratio:      0.985
-# 95% CI:          [0.917 1.058]
+# Risk Difference: 0.015
+# 95% CI:          [-0.055  0.085]
+# Risk Ratio:      1.106
+# 95% CI:          [0.697 1.756]
 #
 # 2b: Causal parameters -- IPW
 # Risk 1:          0.153
