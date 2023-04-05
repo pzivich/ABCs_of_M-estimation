@@ -395,7 +395,7 @@ PROC IML;
 		ef_1 = r#(w - theta[1]);
 		ef_2 = (1 - r)#y#(w - theta[2]);
 		ef_3 = (1 - r)#(1 - y)#((1 - w) - theta[3]);
-		ef_4 = j(n,1,(theta[1] - (1 - theta[3]))/(theta[2] - (1 - theta[3])) - theta[4]);
+		ef_4 = j(n,1,theta[4]*(theta[2] - (1 - theta[3])) - (theta[1] - (1 - theta[3])));
 		ef_mat = ef_1||ef_2||ef_3||ef_4;
 		RETURN(ef_mat);                         						
 	FINISH efunc;       

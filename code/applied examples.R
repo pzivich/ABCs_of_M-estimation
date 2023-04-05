@@ -271,7 +271,7 @@ geex_ef3 <- function(data){
     ef_1 <- r*(w - nu)
     ef_2 <- (1 - r)*y*(w - gamma)
     ef_3 <- (1 - r)*(1 - y)*((1 - w) - eta)
-    ef_4 <- (nu - (1 - eta))/(gamma - (1 - eta)) - psi
+    ef_4 <- psi*(gamma - (1 - eta)) - (nu - (1 - eta))
 
     return(c(ef_1,ef_2,ef_3,ef_4))
   }
