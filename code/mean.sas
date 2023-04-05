@@ -2,7 +2,7 @@
 ABC's of M-estimation
 	Code for M-estimator of the mean (Section 1)
 
-Paul Zivich (2023/03/22)
+Paul Zivich & Rachael Ross (2023/04/05)
 *******************************************************************************************************************/
 
 
@@ -39,61 +39,59 @@ PROC IML;                            /*All steps are completed in PROC IML*/
 
 	/***********************************************
 	Defining estimating equation */
-	q = 1;
-	START efunc(theta) global(n, y);	/*Start to define estimating equation (single argument)*/ 
-		ee = j(1, 1, 0);                	/*Create storage for estimating equation evaluation*/
-		DO i = 1 TO n;                      /*Loop through all observations*/
-			ee = ee + (y[i] - theta);       /*... evaluate for observation i, then add to stored estimating equation evaluation*/
-		END;                                /*End the loop*/
-		RETURN(ee);                         /*Return the estimating equation (\sum_i^n \psi(O_i, \theta)*/
-	FINISH efunc;                       /*End definition of estimating equation*/
+	q = 1;								/*Number of parameters to be estimated*/
+
+	START efunc(theta) global(n, y);	/*Start to define estimating function */
+		ef = y - theta;                	/*Estimating function*/
+		RETURN(ef);                     /*Return estimating function (n by q matrix)*/
+	FINISH efunc;                       /*End definition of estimating function*/
+
+	START eequat(theta);				/*Start to define estimating equation (single argument)*/
+		ef = efunc(theta);				/*Call estimating function function*/
+		RETURN(ef[+,]);                	/*Return column sums (1 by q vector)*/
+	FINISH eequat;                      /*End definition of estimating equation*/
 
 	/***********************************************
 	Root-finding */
-	mu = j(1, q, 0.0);                  * Initial parameter values;
+	mu = {0};                  			* Initial parameter values;
 	optn = q || 1;                      * q roots/parameters;
-	tc = j(1, 12, .);                   * Missing values set to defaults for root-finder;
-	tc[6] = 1e-9;                       * Default is 1e-5, but making more stringent here;
+	tc = j(1, 12, .);                   * Create vector for Termination Criteria options, set all to default using .;
+	tc[6] = 1e-9;                       * Replace 6th option in tc to change default tolerance;
 	CALL nlplm(rc,                      /*Use the Levenberg-Marquardt root-finding method*/
 			   mu_hat,                  /*... name of output parameters that give the root*/
-			   "efunc",                 /*... function to find the roots of*/
+			   "eequat",                /*... function to find the roots of*/
 			   mu,                      /*... starting values for root-finding*/
                optn, ,                  /*... optional arguments for root-finding procedure*/
                tc);                     /*... update convergence tolerance*/
 
 	/***********************************************
 	Baking the bread (approximate derivative) */
-	par = j(1, 3, .);                   * par is a length 3 vector of details;
-	par[1] = q;                         * tell FD we have q parameters;
+	par = q||.||.;                      * Set options for nlpfdd, (3 - 3 parameters, . = default);
 	CALL nlpfdd(func,                   /*Derivative approximation function*/
-                bread,                  /*... name of output matrix that gives the bread*/
-                hess,                   /*... */
-                "efunc",                /*... function to approximate the derivative of*/
+                deriv,                  /*... name of output matrix that gives the derivative*/
+                na,                     /*... name of output matrix that gives the 2nd derivative - we do not need this*/
+                "eequat",               /*... function to approximate the derivative of*/
                 mu_hat,                 /*... point where to find derivative*/
-                par);                   /*... details for derivative approximation*/ 
-	bread = - (bread) / n;              * Negative derivative, averaged;
+                par);                   /*... details for derivative approximation*/
+	bread = - (deriv) / n;              * Negative derivative, averaged;
 
 	/***********************************************
 	Cooking the filling (matrix algebra) */
-	meat = j(q, q, 0);                  * Defining matrix of zeroes to store the calculated filling;
-	ef = j(q, 1, 0);                    * Initialize storage for evaluated estimating function;
-	DO i = 1 TO n;                      /*Start a loop over the n observations*/
-		ef = y[i] - mu_hat;             /*... evaluate the estimating function at parameter estimate*/
-		meat = meat + ef * ef`;         /*... take dot product and add back to filling matrix storage*/
-	END;                                /*End the loop*/
-	meat = meat / n;                    * Average the filling matrix by dividing by n;
+	residuals = efunc(mu_hat);		      * Value of estimating functions at beta hat (n by q matrix);
+	outerprod = residuals` * residuals;   * Outer product of residuals (note transpose is flipped from slides);
+	filling = outerprod / n; 			  * Divide by n for filling;
 
 	/***********************************************
 	Assembling the sandwich (matrix algebra) */
-	sandwich = ( inv(bread) * meat * inv(bread)` ) / n;
+	sandwich = ( inv(bread) * filling * inv(bread)` ) / n;
 
 	/***********************************************
 	Formatting results for output */
 	b = mu_hat`;                        /*Prepare parameter point estimates for export*/
 	se = sqrt(vecdiag(sandwich));       /*Extract corresponding SE for each parameter*/
 
-	* TITLE1 "M-estimator for Mean";      /*Set title for Results Viewer*/
-	* PRINT b bread meat sandwich se;     /*Print information to the Results Viewer*/
+	* TITLE1 "M-estimator for Mean";    /*Set title for Results Viewer*/
+	* PRINT b bread meat sandwich se;   /*Print information to the Results Viewer*/
 
 	CREATE out VAR {b sandwich se};     /*Create an output data set called `out`*/
 		APPEND;                         /*... that includes the parameter estimates, variance, and SE*/
