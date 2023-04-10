@@ -27,7 +27,7 @@ The values should be 8, 13.6, 3.68782, 0.77188, and 15.2281, respectively.
 
 ### R
 - Install the following libraries:
-    - numDeriv, geex
+    - tidyverse, numDeriv, rootSolve, geex
 - Open mean.R and run the entire script
 
 Output should:
