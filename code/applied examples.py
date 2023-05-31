@@ -2,7 +2,7 @@
 # ABC's of M-estimation
 #   Code for applied examples (Section 2)
 #
-# Paul Zivich (2023/04/04)
+# Paul Zivich (2023/05/31)
 ####################################################################################################################
 
 ############################################
@@ -285,16 +285,11 @@ y = np.asarray(d['Y'])
 
 
 def psi(theta):
-    # Dividing parameters into corresponding parts and labels from slides
-    nu = theta[0]       # Naive mean
-    gamma = theta[1]    # Sensitivity
-    eta = theta[2]      # Specificity
-    phi = theta[3]      # Corrected mean
-
-    ee_1 = r*(w - nu)                                                  # EF naive mean
-    ee_2 = (1-r) * y * (w - gamma)                                     # EF sensitivity
-    ee_3 = (1-r) * (1-y) * ((1-w) - eta)                               # EF specificity
-    ee_4 = np.ones(y.shape[0])*phi*(gamma + eta - 1) - (nu + eta - 1)  # EF corrected mean
+    # theta[0]: naive mean, theta[1]: sensitivity, theta[2]: specificity, theta[3]: corrected mean
+    ee_1 = r*(w - theta[0])                                                                    # EF naive mean
+    ee_2 = (1-r) * y * (w - theta[1])                                                          # EF sensitivity
+    ee_3 = (1-r) * (1-y) * ((1-w) - theta[2])                                                  # EF specificity
+    ee_4 = np.ones(y.shape[0])*theta[3]*(theta[1] + theta[2] - 1) - (theta[0] + theta[2] - 1)  # EF corrected mean
 
     # Returning stacked estimating functions in order of parameters
     return np.vstack([ee_1,      # EF naive mean
