@@ -263,11 +263,6 @@ geex_ef3 <- function(data){
   w <- data$w
   
   function(theta){
-    nu <- 
-    gamma <- 
-    eta <- 
-    phi <- 
-    
     ef_1 <- r*(w - theta[1])
     ef_2 <- (1 - r)*y*(w - theta[2])
     ef_3 <- (1 - r)*(1 - y)*((1 - w) - theta[3])
