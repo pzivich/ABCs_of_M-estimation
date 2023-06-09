@@ -35,7 +35,7 @@ reg_mle <- glm(ptb ~ anemia + bp, data=dat, family="binomial")
 ests_mle <-as.data.frame(cbind("beta"=reg_mle$coefficients,
                                "se"=sqrt(diag(vcov(reg_mle))))) %>%
   mutate(lcl = beta - 1.96*se,
-         ucl = beta + 1.95*se)
+         ucl = beta + 1.96*se)
 intlist <- row.names(ests_mle)
 
 print("Estimated logistic regression")
@@ -90,7 +90,7 @@ se <- sqrt(diag(sandwich / n))
 ests_mest <-as.data.frame(cbind("beta"=beta_root,
                                 "se"=se)) %>%
   mutate(lcl = beta - 1.96*se,
-         ucl = beta + 1.95*se)
+         ucl = beta + 1.96*se)
 
 row.names(ests_mest) <- intlist
             
@@ -122,7 +122,7 @@ se_geex <- sqrt(diag(vcov(mestr)))    # Extract finite sample variance and take 
 ests_geex <-as.data.frame(cbind("beta"=beta_geex,
                                 "se"=se_geex)) %>%
   mutate(lcl = beta - 1.96*se,
-         ucl = beta + 1.95*se)
+         ucl = beta + 1.96*se)
 
 row.names(ests_geex) <- intlist
 
@@ -184,7 +184,7 @@ se2a <- sqrt(diag(vcov(mest_2a)))
 ests_2a <-as.data.frame(cbind("beta"=theta2a,
                                 "se"=se2a)) %>%
   mutate(lcl = beta - 1.96*se,
-         ucl = beta + 1.95*se)
+         ucl = beta + 1.96*se)
 
 row.names(ests_2a) <- c(intlist,"risk1","risk0","rd","lnrr")
 
@@ -232,7 +232,7 @@ se2b <- sqrt(diag(vcov(mest_2b)))
 ests_2b <-as.data.frame(cbind("beta"=theta2b,
                               "se"=se2b)) %>%
   mutate(lcl = beta - 1.96*se,
-         ucl = beta + 1.95*se)
+         ucl = beta + 1.96*se)
 
 row.names(ests_2b) <- c(intlist[1],intlist[3],"risk1","risk0","rd","lnrr")
 
