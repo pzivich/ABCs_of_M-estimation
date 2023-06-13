@@ -66,8 +66,13 @@ If you have problems or encounter errors, please open an issue on the GitHub pag
 ## Schedule
 
 1:00 - 1:15 Introductions and start-up
+
 1:15 - 2:15 Introduction to M-estimation
+
 2:15 - 2:30 Break
+
 2:30 - 3:45 Applications
+
 3:45 - 4:00 Break
+
 4:00 - 5:00 Concluding discussion
