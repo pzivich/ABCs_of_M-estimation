@@ -2,7 +2,7 @@
 # ABC's of M-estimation
 #   Code for applied examples (Section 2)
 #
-# Paul Zivich (2023/05/31)
+# Paul Zivich (2024/06/10)
 ####################################################################################################################
 
 ############################################
@@ -263,75 +263,126 @@ print("95% CI:         ", np.round(np.exp(mestr.confidence_intervals()[5, :]), 3
 print("")
 
 ############################################################################################
-# Example 3: Data Fusion
+# Example 3:Transport to External Target
 
-d = pd.DataFrame()
-d['R'] = [1, 1, 0, 0, 0, 0]
-d['Y'] = [0, 0, 1, 1, 0, 0]
-d['W'] = [1, 0, 1, 0, 1, 0]
-d['n'] = [680, 270, 204, 38, 18, 71]
-d['intercept'] = 1
-d = pd.DataFrame(np.repeat(d.values, d['n'], axis=0),   # Expanding compact data frame
-                 columns=d.columns)                     # ... keeping column names
-d = d[['intercept', 'R', 'W', 'Y']].copy()              # Dropping the n column
-n = d.shape[0]                                          # Number of observations
+# Adding population indicator to ZAPPS
+d['zapps'] = 1
 
-r = np.asarray(d['R'])
-w = np.asarray(d['W'])
-y = np.asarray(d['Y'])
+# Target Population Data
+d_target = pd.DataFrame()
+d_target['X'] = [0, 0, 1, 1]
+d_target['W'] = [0, 1, 0, 1]
+d_target['n'] = [300, 300, 300, 100]
+d_target['zapps'] = 0
+d_target['intercept'] = 1
+d_target = pd.DataFrame(np.repeat(d_target.values, d_target['n'], axis=0),  # Expanding compact data frame
+                        columns=d_target.columns)                           # ... keeping column names
+d_target = d_target[['intercept', 'X', 'W', 'zapps']].copy()                # Dropping the n column
+
+# Stacking data together
+df = pd.concat([d, d_target], ignore_index=True)
+
+############################################################################################
+# Example 3a: Standardization by g-computation
+
+# To handle missing, we will fill in a placeholder value, -999. This
+#   approach is compatible with the root-finding algorithm and allows
+#   us to easily check that only the correct observations are contributing
+#   to the nuisance model (it will have trouble converging if these contribute)
+y_no_nan = np.nan_to_num(df['Y'], nan=-999)
+s = np.asarray(df['zapps'])
 
 ############################################
 # Using delicatessen
 
 
 def psi(theta):
-    # theta[0]: naive mean, theta[1]: sensitivity, theta[2]: specificity, theta[3]: corrected mean
-    ee_1 = r*(w - theta[0])                                                                    # EF naive mean
-    ee_2 = (1-r) * y * (w - theta[1])                                                          # EF sensitivity
-    ee_3 = (1-r) * (1-y) * ((1-w) - theta[2])                                                  # EF specificity
-    ee_4 = np.ones(y.shape[0])*theta[3]*(theta[1] + theta[2] - 1) - (theta[0] + theta[2] - 1)  # EF corrected mean
+    # Dividing parameters into corresponding parts and labels from slides
+    beta = theta[0:3]   # Logistic model coefficients
+    mu = theta[3]       # Risk
+
+    # Using built-in regression model functionality from delicatessen
+    ee_logit = ee_regression(theta=beta,
+                             y=y_no_nan,
+                             X=df[['intercept', 'X', 'W']],
+                             model='logistic')
+    ee_logit = ee_logit * s  # Restricting contributions to ZAPPS
+
+    # Transforming logistic model coefficients into causal parameters
+    y_hat = inverse_logit(np.dot(df[['intercept', 'X', 'W']], beta))  # Predictions
+    # Estimating function for causal risk under a=1
+    ee_r1 = (1-s) * (y_hat - mu)
 
     # Returning stacked estimating functions in order of parameters
-    return np.vstack([ee_1,      # EF naive mean
-                      ee_2,      # EF sensitivity
-                      ee_3,      # EF specificity
-                      ee_4])     # EF corrected mean
+    return np.vstack([ee_logit,   # EF of logistic model
+                      ee_r1])     # EF of risk in target
 
 
-mestr = MEstimator(psi, init=[0.5, 0.75, 0.75, 0.5])
+mestr = MEstimator(psi, init=[0, 0, 0, 0.5])
 mestr.estimate(solver='lm')
 
-print("3: Fusion")
-print("Uncorrected Mean:", np.round(mestr.theta[0], 3))
-print("95% CI:          ", np.round(mestr.confidence_intervals()[0, :], 3))
-print("Sensitivity:     ", np.round(mestr.theta[1], 3))
-print("95% CI:          ", np.round(mestr.confidence_intervals()[1, :], 3))
-print("Specificity:     ", np.round(mestr.theta[2], 3))
-print("95% CI:          ", np.round(mestr.confidence_intervals()[2, :], 3))
-print("Corrected Mean:  ", np.round(mestr.theta[3], 3))
-print("95% CI:          ", np.round(mestr.confidence_intervals()[3, :], 3))
+print("3a: Transport -- g-computation")
+print("Risk:   ", np.round(mestr.theta[-1], 3))
+print("95% CI: ", np.round(mestr.confidence_intervals()[-1, :], 3))
 print("")
 
+############################################################################################
+# Example 3b: Standardization by IOSW
+
+############################################
+# Using delicatessen
+
+
+def psi(theta):
+    # Dividing parameters into corresponding parts and labels from slides
+    alpha = theta[0:3]   # Logistic model coefficients
+    mu = theta[3]       # Risk
+
+    # Using built-in regression model functionality from delicatessen
+    ee_logit = ee_regression(theta=alpha,
+                             y=s,
+                             X=df[['intercept', 'X', 'W']],
+                             model='logistic')
+
+    # Computing IOSW
+    pi = inverse_logit(np.dot(df[['intercept', 'X', 'W']], alpha))  # Probablility score
+    wt = (1-pi)/pi                                                  # Corresponding weights
+
+    # Estimating function for causal risk under a=1
+    ee_r1 = s * wt * (y_no_nan - mu)
+
+    # Returning stacked estimating functions in order of parameters
+    return np.vstack([ee_logit,   # EF of logistic model
+                      ee_r1])     # EF of risk in target
+
+
+mestr = MEstimator(psi, init=[0, 0, 0, 0.5])
+mestr.estimate(solver='lm')
+
+print("3b: Transport -- IOSW")
+print("Risk:         ", np.round(mestr.theta[-1], 3))
+print("95% CI:         ", np.round(mestr.confidence_intervals()[-1, :], 3))
+
 ####################################################################################################################
-# EXPECTED OUTPUT (versions may differ):
+# EXPECTED OUTPUT (your package versions may differ):
 
 # versions
-# NumPy:         1.22.2
+# NumPy:         1.25.2
 # Pandas:        1.4.1
-# SciPy:         1.9.2
-# Statsmodels:   0.13.2
-# Delicatessen:  1.2
-#
+# SciPy:         1.11.2
+# Statsmodels:   0.14.1
+# Delicatessen:  2.2
+
 # 1: Logistic Regression
 # Point Estimates
 # MLE:          [-1.89450082  0.11873535  0.36051133]
 # By-hand:      [-1.89450082  0.11873535  0.36051133]
 # Delicatessen: [-1.89450082  0.11873535  0.36051133]
 # Variance Estimates
-# MLE:          [0.01496046 0.07764837 0.05660453]
-# By-hand:      [0.01484041 0.0777204  0.05652963]
-# Delicatessen: [0.01484041 0.0777204  0.05652963]
-#
+# MLE:          [0.12231295 0.27865458 0.23791706]
+# By-hand:      [0.12182124 0.27878379 0.2377596 ]
+# Delicatessen: [0.12182124 0.27878379 0.2377596 ]
+
 # 2a: Causal parameters -- g-computation
 # Risk 1:          0.154
 # 95% CI:          [0.089 0.22 ]
@@ -341,7 +392,7 @@ print("")
 # 95% CI:          [-0.055  0.085]
 # Risk Ratio:      1.106
 # 95% CI:          [0.697 1.756]
-#
+
 # 2b: Causal parameters -- IPW
 # Risk 1:          0.153
 # 95% CI:          [0.088 0.219]
@@ -351,16 +402,14 @@ print("")
 # 95% CI:          [-0.057  0.084]
 # Risk Ratio:      1.098
 # 95% CI:          [0.69  1.747]
-#
-# 3: Fusion
-# Uncorrected Mean: 0.716
-# 95% CI:           [0.687 0.744]
-# Sensitivity:      0.843
-# 95% CI:           [0.797 0.889]
-# Specificity:      0.798
-# 95% CI:           [0.714 0.881]
-# Corrected Mean:   0.801
-# 95% CI:           [0.724 0.879]
+
+# 3a: Transport -- g-computation
+# Risk:    0.155
+# 95% CI:  [0.121 0.19 ]
+
+# 3b: Transport -- IOSW
+# Risk:          0.155
+# 95% CI:          [0.115 0.195]
 
 ####################################################################################################################
 # END

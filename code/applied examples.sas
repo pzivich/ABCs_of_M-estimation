@@ -2,7 +2,7 @@
 ABC's of M-estimation
 	Code for applied examples (Section 2)
 
-Rachael Ross (2023/03/28)
+Rachael Ross (2023/03/28), Paul Zivich (2024/06/10)
 *******************************************************************************************************************/
 
 /***********************************************
@@ -344,59 +344,80 @@ PROC IML;
 RUN;
 
 /***********************************************
-Example 3: Data fusion */
+Example 3: Transport to External Target */
 /***********************************************
 
 /***********************************************
-Loading Data */
+Loading Target Data */
 
-data datfusion_cnts;
-input r y w n;
+data d_target_cnt;
+input zapps anemia bp n;
 datalines;
-1 1 1 0 
-1 1 0 0
-1 0 1 680
-1 0 0 270
-0 1 1 204
-0 1 0 38
-0 0 1 18
-0 0 0 71
+1 0 0 300 
+1 0 1 300
+1 1 0 300
+1 1 1 100
 ;
 run;
 
-data datfusion;
-set datfusion_cnts;
+data d_target;
+set d_target_cnt;
 do i=1 to n;
 	output;
 end;
 drop n;
 run;
 
+* Adding ZAPPS indicator;
+data dat;
+set dat;
+zapps = 1;
+run;
+
+data d_target;
+set d_target;
+ptb = -999; *setting outcomes to generic missing value;
+zapps = 0;
+run;
+
+* Stacking data sets;
+data df;
+set dat d_target;
+run;
+
+/***********************************************
+Example 3a: Transport by g-computation */
+/***********************************************
 
 /***********************************************
 M-estimator */
 
 PROC IML;                            
 	*Read data;
-	use datfusion;								
-		read all var {r} into r;		
-		read all var {y} into y;
-		read all var {w} into w;
-	close datfusion;
+	use df;								
+		read all var {ptb} into ptb;		
+		read all var {anemia} into anemia;
+		read all var {bp} into bp;
+		read all var {zapps} into s;		
+	close df;
 
-	n = nrow(r);                        
+	n = nrow(s);                        
 
 	/***********************************************
 	Defining estimating equation */
 
-	q = 4;								
+	q = 4;
 
-	START efunc(theta) global(r, y, w, n);							
-		ef_1 = r#(w - theta[1]);
-		ef_2 = (1 - r)#y#(w - theta[2]);
-		ef_3 = (1 - r)#(1 - y)#((1 - w) - theta[3]);
-		ef_4 = j(n,1,theta[4]*(theta[2] - (1 - theta[3])) - (theta[1] - (1 - theta[3])));
-		ef_mat = ef_1||ef_2||ef_3||ef_4;
+	START efunc(theta) global(s, ptb, anemia, bp);
+		*Outcome nuisance model;
+		p = 1 / (1 + exp(-(theta[1] + theta[2]*anemia + theta[3]*bp)));	
+		ef_1 = s#(ptb - p);
+		ef_2 = s#((ptb - p)#anemia);
+		ef_3 = s#((ptb - p)#bp);
+		*Risk estimating function;
+		ef_r = (1-s)#(p - theta[4]);
+		* Stacking estimating functions;
+		ef_mat = ef_1||ef_2||ef_3||ef_r;
 		RETURN(ef_mat);                         						
 	FINISH efunc;       
 
@@ -441,7 +462,7 @@ PROC IML;
 
 	/***********************************************
 	Formatting results for output */
-	variable = {"pr_w","se","sp","pr_y"};  
+	variable = {"Beta_0","Beta_1","Beta_2","Risk"};  
 	est = theta_hat`;                    
 	se = sqrt(vecdiag(sandwich));       
 	lcl = est - 1.96*se; 				
@@ -454,3 +475,97 @@ PROC IML;
 	CLOSE ests_3;                          		  
 	QUIT;                                   
 RUN;
+
+/***********************************************
+Example 3b: Standardization by IOSW */
+
+/***********************************************
+M-estimator */
+
+PROC IML;                            
+	*Read data;
+	use df;								
+		read all var {ptb} into ptb;		
+		read all var {anemia} into anemia;
+		read all var {bp} into bp;
+		read all var {zapps} into s;		
+	close df;
+
+	n = nrow(s);                        
+
+	/***********************************************
+	Defining estimating equation */
+
+	q = 4;
+
+	START efunc(theta) global(s, ptb, anemia, bp);
+		*Outcome nuisance model;
+		p = 1 / (1 + exp(-(theta[1] + theta[2]*anemia + theta[3]*bp)));	
+		weight = s#(1-p)/p;
+		ef_1 = s - p;
+		ef_2 = (s - p)#anemia;
+		ef_3 = (s - p)#bp;
+		*Risk estimating function;
+		ef_r = (ptb - theta[4]) # weight;
+		* Stacking estimating functions;
+		ef_mat = ef_1||ef_2||ef_3||ef_r;
+		RETURN(ef_mat);                         						
+	FINISH efunc;       
+
+	START eequat(theta);					 								
+		ef = efunc(theta);
+		RETURN(ef[+,]);                  								
+	FINISH eequat;                       								
+
+	/***********************************************
+	Root-finding */
+	initial = {.7,1,1,.7};       * Initial parameter values;
+	optn = q || 1;                      * Set options for nlplm, (3 - requests 3 roots,1 - printing summary output);
+	tc = j(1, 12, .);                   * Create vector for Termination Criteria options, set all to default using .;
+	tc[6] = 1e-9;                       * Replace 6th option in tc to change default tolerance;
+	CALL nlplm(rc,                      /*Use the Levenberg-Marquardt root-finding method*/
+			   theta_hat,                /*... name of output parameters that give the root*/
+			   "eequat",                /*... function to find the roots of*/
+			   initial,                 /*... starting values for root-finding*/
+               optn, ,                  /*... optional arguments for root-finding procedure*/
+               tc);                     /*... update convergence tolerance*/
+
+	/***********************************************
+	Baking the bread (approximate derivative) */
+	par = q||.||.;                   	* Set options for nlpfdd, (3 - 3 parameters, . = default);
+	CALL nlpfdd(func,                   /*Derivative approximation function*/
+                deriv,                  /*... name of output matrix that gives the derivative*/
+                na,                     /*... name of output matrix that gives the 2nd derivative - we do not need this*/
+                "eequat",               /*... function to approximate the derivative of*/
+                theta_hat,               /*... point where to find derivative*/
+                par);                   /*... details for derivative approximation*/ 
+	bread = - (deriv) / n;              * Negative derivative, averaged;
+
+	/***********************************************
+	Cooking the filling (matrix algebra) */
+	residuals = efunc(theta_hat);		* Value of estimating functions at beta hat (n by q matrix);
+	outerprod = residuals` * residuals; * Outerproduct of residuals (note transpose is flipped from slides);
+	filling = outerprod / n; 				* Divide by n for filling;
+
+	/***********************************************
+	Assembling the sandwich (matrix algebra) */
+	sandwich = ( inv(bread) * filling * inv(bread)` ) / n;
+
+	/***********************************************
+	Formatting results for output */
+	variable = {"Beta_0","Beta_1","Beta_2","Risk"};  
+	est = theta_hat`;                    
+	se = sqrt(vecdiag(sandwich));       
+	lcl = est - 1.96*se; 				
+	ucl = est + 1.96*se;				
+
+	PRINT variable est se lcl ucl;     	
+
+	CREATE ests_3 VAR {variable est se lcl ucl};   
+		APPEND;                         		  	  
+	CLOSE ests_3;                          		  
+	QUIT;                                   
+RUN;
+
+
+/*END*/

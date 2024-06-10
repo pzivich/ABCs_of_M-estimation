@@ -2,7 +2,7 @@
 # ABC's of M-estimation
 # 	Code for applied examples (Section 2)
 # 
-# Rachael Ross (2023/03/24)
+# Rachael Ross (2024/02/18)
 ###################################################################################################################
 
 ############################################
@@ -26,6 +26,7 @@ dat <- tibble(anemia=c(rep(0,4),rep(1,4)),
   uncount(n) 
 
 n <- nrow(dat)     # Number of observations
+
 
 ############################################
 # Regression by MLE 
@@ -142,6 +143,8 @@ print(round(ests_mest,3))
 print("M-Estimation, by hand")
 print(round(ests_geex,3))
 
+############################################
+# EXAMPLE 2: STANDARDIZATION FOR INTERNAL VALIDITY
 
 ################################################
 # EXAMPLE 2a: STANDARDIZATION BY G-COMPUTATION
@@ -241,51 +244,120 @@ print(round(ests_2b,3))
 
 
 ############################################
-# EXAMPLE 3: DATA FUSION
+# EXAMPLE 3: TRANSPORT TO EXTERNAL TARGET
 
 ############################################
+
 # Data 
+targetdat <- tibble(anemia=c(rep(0,2),rep(1,2)),
+                    bp=rep(c(0,1),2),
+                    ptb=rep(NA,4),
+                    n=c(300,300,300,100)) %>%
+  uncount(n)
 
-datfusion <- tibble(r=c(rep(1,950),rep(0,331)),
-              y=c(rep(0,950),                           # Missing Y in R=1 set to 0
-                  rep(1,242),rep(0,89)),
-              w=c(rep(1,680),rep(0,950-680),
-                  rep(1,204),rep(0,38),rep(1,18),rep(0,71)))
+
+# Combine ZAPPS sample and target data
+stacked <- rbind(dat |> mutate(S=1), #create S indicator for each dataset
+                 targetdat |> mutate(S=0)) %>% 
+  mutate(ptb = ifelse(S==0,0,ptb)) #replace missing ptb with 0
 
 
+sample_mle <- glm(S ~ anemia + bp + anemia*bp, data=stacked, family="binomial")   
+test <- stacked %>%
+  mutate(ps1 = predict(sample_mle, ., type="response"),
+         ps0 = 1-ps1,
+         oddswgt = ps0/ps1)
+
+
+################################################
+# EXAMPLE 3a: OUTCOME MODEL BASED STANDARDIZATION
 
 ################################################
 # Using geex 
 
-geex_ef3 <- function(data){               
-  r <- data$r
-  y <- data$y
-  w <- data$w
+geex_ef3A <- function(data){               
+  ptb <- data$ptb
+  anemia <- data$anemia
+  bp <- data$bp
+  S <- data$S
   
   function(theta){
-    ef_1 <- r*(w - theta[1])
-    ef_2 <- (1 - r)*y*(w - theta[2])
-    ef_3 <- (1 - r)*(1 - y)*((1 - w) - theta[3])
-    ef_4 <- theta[4]*(theta[2] - (1 - theta[3])) - (theta[1] - (1 - theta[3]))
+    beta <- theta[1:3]
+    mu <- theta[4]
 
-    return(c(ef_1,ef_2,ef_3,ef_4))
+    p <- plogis(beta[1] + beta[2]*anemia + beta[3]*bp)
+    
+    ef_1 <- S*(ptb - p)
+    ef_2 <- S*(ptb - p)*anemia
+    ef_3 <- S*(ptb - p)*bp
+    
+    ef_r <- (1-S)*(p - mu[1])
+    return(c(ef_1,ef_2,ef_3,ef_r))
   }
 }
 
-mest_3 <- geex::m_estimate(estFUN = geex_ef3,                                       
-                           data = datfusion,                                             
-                           root_control = setup_root_control(start = c(.7,1,1,0.7)))   
+mest_3a <- geex::m_estimate(estFUN = geex_ef3A,                                       
+                           data = stacked,                                             
+                           root_control = setup_root_control(start = c(0,0,0,.1)))   
 
-theta3 <- roots(mest_3)             
-se3 <- sqrt(diag(vcov(mest_3)))    
+theta3a <- roots(mest_3a)             
+se3a <- sqrt(diag(vcov(mest_3a)))    
 
-ests_3 <-as.data.frame(cbind("beta"=theta3,
-                              "se"=se3)) %>%
+ests_3a <-as.data.frame(cbind("beta"=theta3a,
+                             "se"=se3a)) %>%
   mutate(lcl = beta - 1.96*se,
          ucl = beta + 1.95*se)
 
-row.names(ests_3) <- c("pr_w","se","sp","pr_y")
 
-print("ME correction, using geex")
-print(round(ests_3,3))
-      
+row.names(ests_3a) <- c(intlist,"risk in target")
+                        
+print("Outcome model standradization for transporting a risk by M-Estimation, using geex")
+print(round(ests_3a,3))
+
+################################################
+# EXAMPLE 3b: STANDARDIZATION BY ODDS WEIGHTING
+
+################################################
+# Using geex 
+
+data <- stacked
+
+geex_ef3B <- function(data){               
+  ptb <- data$ptb
+  anemia <- data$anemia
+  bp <- data$bp
+  S <- data$S
+  
+  function(theta){
+    gamma <- theta[1:3]
+    mu <- theta[4]
+
+    p <- plogis(gamma[1] + gamma[2]*anemia + gamma[3]*bp)
+    ef_1 <- (S - p)
+    ef_2 <- (S - p)*anemia
+    ef_3 <- (S - p)*bp
+    
+    oddswt <- (1-p)/p
+    ef_r <- S*oddswt*(ptb - mu[1])
+    return(c(ef_1,ef_2,ef_3,ef_r))
+  }
+}
+
+mest_3b <- geex::m_estimate(estFUN = geex_ef3B,                                       
+                            data = stacked,                                             
+                            root_control = setup_root_control(start = c(0,0,0,.1)))   
+
+theta3b <- roots(mest_3b)             
+se3b <- sqrt(diag(vcov(mest_3b)))    
+
+ests_3b <-as.data.frame(cbind("beta"=theta3b,
+                              "se"=se3b)) %>%
+  mutate(lcl = beta - 1.96*se,
+         ucl = beta + 1.96*se)
+
+row.names(ests_3b) <- c(intlist,"risk")
+
+print("Odds weighting for transporting a risk by M-Estimation, using geex")
+print(round(ests_3b,3))
+
+# END
