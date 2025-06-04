@@ -1,8 +1,9 @@
-# ABC's of M-estimation
+# ABC's of Estimating Equations (M-estimation)
 
-Materials for the SER 2023 "ABC's of M-estimation" workshop with support for SAS, R, and Python.
+Materials for the SER 2025 "ABC's of Estimating Equations" workshop (a continuation of the ABC's of M-estimation
+workshop) with support for SAS, R, and Python.
 
-Materials and workshop created by: Paul Zivich, Rachael Ross, Stephen Cole
+Materials and workshop created by: Paul Zivich, Rachael Ross, Bonnie Shook-Sa, Stephen Cole
 
 [![DOI](https://zenodo.org/badge/618596455.svg)](https://zenodo.org/badge/latestdoi/618596455)
 
@@ -65,14 +66,14 @@ If you have problems or encounter errors, please open an issue on the GitHub pag
 
 ## Schedule
 
-1:00 - 1:15 Introductions and start-up
+8:30 - 8:45 Introductions and start-up
 
-1:15 - 2:15 Introduction to M-estimation
+8:45 - 9:45 Introduction to M-estimation
 
-2:15 - 2:30 Break
+9:45 - 10:00 Break
 
-2:30 - 3:45 Applications
+10:00 - 11:15 Applications
 
-3:45 - 4:00 Break
+11:15 - 11:30 Break
 
-4:00 - 5:00 Concluding discussion
+11:30 - 12:30 Concluding discussion
