@@ -2,7 +2,7 @@
 # ABC's of M-estimation
 #   Code for M-estimator of the mean (Section 1)
 #
-# Paul Zivich (2023/03/20)
+# Paul Zivich (2025/06/04)
 ####################################################################################################################
 
 ############################################
@@ -100,10 +100,10 @@ print("95% CI: ", np.round(mestr.confidence_intervals(), 3))
 # EXPECTED OUTPUT (versions may differ):
 
 # versions
-# NumPy:         1.22.2
+# NumPy:         1.25.2
 # Pandas:        1.4.1
-# SciPy:         1.9.2
-# Delicatessen:  1.1
+# SciPy:         1.11.2
+# Delicatessen:  3.2
 #
 # Estimated mean
 # Closed-form: 8.0

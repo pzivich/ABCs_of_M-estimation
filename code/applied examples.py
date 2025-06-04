@@ -2,7 +2,7 @@
 # ABC's of M-estimation
 #   Code for applied examples (Section 2)
 #
-# Paul Zivich (2024/06/10)
+# Paul Zivich (2024/06/04)
 ####################################################################################################################
 
 ############################################
@@ -371,8 +371,8 @@ print("95% CI:         ", np.round(mestr.confidence_intervals()[-1, :], 3))
 # Pandas:        1.4.1
 # SciPy:         1.11.2
 # Statsmodels:   0.14.1
-# Delicatessen:  2.2
-
+# Delicatessen:  3.2
+#
 # 1: Logistic Regression
 # Point Estimates
 # MLE:          [-1.89450082  0.11873535  0.36051133]
@@ -382,7 +382,7 @@ print("95% CI:         ", np.round(mestr.confidence_intervals()[-1, :], 3))
 # MLE:          [0.12231295 0.27865458 0.23791706]
 # By-hand:      [0.12182124 0.27878379 0.2377596 ]
 # Delicatessen: [0.12182124 0.27878379 0.2377596 ]
-
+#
 # 2a: Causal parameters -- g-computation
 # Risk 1:          0.154
 # 95% CI:          [0.089 0.22 ]
@@ -392,7 +392,7 @@ print("95% CI:         ", np.round(mestr.confidence_intervals()[-1, :], 3))
 # 95% CI:          [-0.055  0.085]
 # Risk Ratio:      1.106
 # 95% CI:          [0.697 1.756]
-
+#
 # 2b: Causal parameters -- IPW
 # Risk 1:          0.153
 # 95% CI:          [0.088 0.219]
@@ -402,11 +402,11 @@ print("95% CI:         ", np.round(mestr.confidence_intervals()[-1, :], 3))
 # 95% CI:          [-0.057  0.084]
 # Risk Ratio:      1.098
 # 95% CI:          [0.69  1.747]
-
+#
 # 3a: Transport -- g-computation
 # Risk:    0.155
 # 95% CI:  [0.121 0.19 ]
-
+#
 # 3b: Transport -- IOSW
 # Risk:          0.155
 # 95% CI:          [0.115 0.195]
