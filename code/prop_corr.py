@@ -26,20 +26,20 @@ print('Delicatessen: ', deli.__version__, '\n')
 # Data
 
 d = pd.DataFrame()
-d['Y'] = [0, 1, 0, 1]
+d['Y*'] = [0, 1, 0, 1]
 d['R'] = [1, 1, 0, 0]
 d['n'] = [120, 80, 15, 85]
 d = pd.DataFrame(np.repeat(d.values, d['n'], axis=0),   # Expanding compact data frame
                  columns=d.columns)                     # ... keeping column names
-d = d[['R', 'Y']].copy()                                # Dropping the n column
+d = d[['R', 'Y*']].copy()                               # Dropping the n column
 n = d.shape[0]                                          # Number of observations
 
 ############################################
 # By-hand Calculation
 
-mu_star = np.mean(d.loc[d['R'] == 1, 'Y'])    # Manually calculate the naive proportion
-alpha = np.mean(d.loc[d['R'] == 0, 'Y'])      # Manually calculate the sensitivity
-mu = mu_star / alpha                          # Manually calculate the corrected proportion
+mu_star = np.mean(d.loc[d['R'] == 1, 'Y*'])    # Manually calculate the naive proportion
+alpha = np.mean(d.loc[d['R'] == 0, 'Y*'])      # Manually calculate the sensitivity
+mu = mu_star / alpha                           # Manually calculate the corrected proportion
 print("By-Hand")
 print("Naive Proportion:    ", mu_star)
 print("Sensitivity:         ", alpha)
@@ -49,15 +49,15 @@ print("Corrected Proportion:", mu)
 # Defining estimating equation
 
 # Pulling out needed variables from data set
-y = np.asarray(d['Y'])
+ystar = np.asarray(d['Y*'])
 r = np.asarray(d['R'])
 
 def estimating_function(theta):
     mu_tilde, alpha_tilde = theta
 
     # Parameter-specific estimating functions
-    ef_mean = r * (y - alpha_tilde*mu_tilde)
-    ef_sens = (1-r) * (y - alpha_tilde)
+    ef_mean = r * (ystar - alpha_tilde*mu_tilde)
+    ef_sens = (1-r) * (ystar - alpha_tilde)
 
     # Stacking the estimating functions together into vectors
     return np.vstack([ef_mean, ef_sens])
