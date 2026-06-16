@@ -1,5 +1,5 @@
 ###################################################################################################################
-# ABC's of M-estimation
+# ABC's of Estimating Equations
 # 	Code for M-estimator of the mean (Section 1)
 # 
 # Rachael Ross (2023/03/23)

@@ -1,5 +1,5 @@
 ###################################################################################################################
-# ABC's of M-estimation
+# ABC's of Estimating Equations
 # 	Code for applied examples (Section 2)
 # 
 # Rachael Ross (2024/02/18)
