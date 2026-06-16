@@ -16,7 +16,7 @@ library("geex")
 ############################################
 # Data
 
-dat <- tibble(y=c(0, 1, 0, 1),
+dat <- tibble(ystar=c(0, 1, 0, 1),
               r=c(1, 1, 0, 0),
               n=c(120,80,15,85)) %>%
   uncount(n)
@@ -25,8 +25,8 @@ n <- nrow(dat)     # Number of observations
 ############################################
 # By-Hand Calculation
 
-mu_star <- mean(dat$y[dat$r == 1])
-alpha <- mean(dat$y[dat$r == 0])
+mu_star <- mean(dat$ystar[dat$r == 1])
+alpha <- mean(dat$ystar[dat$r == 0])
 mu = mu_star / alpha
 print("By-Hand")
 print(paste("Naive Proportion:    ", round(mu_star,3)))
@@ -39,21 +39,21 @@ print(paste("Corrected Proportion:", round(mu,3)))
 ############################################
 # Defining estimating equation
 
-estimating_function <- function(theta){
+estimating_function <- function(theta){ 
   mu_tilde <- theta[1]
   alpha_tilde <- theta[2]
 
   # Parameter-specific estimating functions
-  ef_mean = dat$r * (dat$y - mu_tilde*alpha_tilde)
-  ef_sens = (1-dat$r) * (dat$y - alpha_tilde)
+  ef_mean = dat$r * (dat$ystar - mu_tilde*alpha_tilde)
+  ef_sens = (1-dat$r) * (dat$ystar - alpha_tilde)
 
   # Stacking the estimating functions together into vectors
   return(cbind(ef_mean, ef_sens))
-}
+} # Function outputs an n by p matrix
 
 estimating_equation <- function(theta){
-  estf = estimating_function(theta)       # Return estimating function
-  este = colSums(estf)                    # Sum over all estimating functions
+  estf = estimating_function(theta)       # Return estimating function (n by p)
+  este = colSums(estf)                    # Sum over n contributions to estimating functions (p vector)
   return(este)
 }
 
@@ -97,15 +97,15 @@ print(round(ests_mest,3))
 # Using geex instead of by-hand
 
 geex_ef <- function(data){               # Function of estimating functions (to be used in geex::m_estimate)
-  y <- data$y
+  ystar <- data$ystar
   r <- data$r
   function(theta){
       mu_tilde <- theta[1]
       alpha_tilde <- theta[2]
 
       # Parameter-specific estimating functions
-      ef_mean = r * (y - mu_tilde*alpha_tilde)
-      ef_sens = (1-r) * (y - alpha_tilde)
+      ef_mean = r * (ystar - mu_tilde*alpha_tilde)
+      ef_sens = (1-r) * (ystar - alpha_tilde)
 
       # Stacking the estimating functions together into vectors
       c(ef_mean, ef_sens)

@@ -10,7 +10,7 @@ Paul Zivich & Rachael Ross (2026/06/15)
 Loading Data */
 
 data dat_cnts;
-input y r n;
+input ystar r n;
 datalines;
 0 1 120
 1 1 80
@@ -34,31 +34,30 @@ M-estimator */
 PROC IML;                            /*All steps are completed in PROC IML*/
 	*Read data;
 	USE dat;                           	/*Open input data from above*/
-		READ all VAR {y} INTO y;        /*... read the column y in the vector y*/
+		READ all VAR {ystar} INTO ystar;/*... read the column y in the vector y*/
 		READ all VAR {r} INTO r;        /*... read the column y in the vector y*/
 	CLOSE dat;                          /*Close input data from above*/
-	n = nrow(y);                        /*Mark number of observations in data (rows of y)*/
+	n = nrow(ystar);                        /*Mark number of observations in data (rows of y)*/
 
 	/***********************************************
 	Defining estimating equation */
 	q = 2;								/*Number of parameters to be estimated*/
 
-	START efunc(theta) global(n, y, r);	        /*Start to define estimating function */
-	    ef_mean = (y - theta[1]*theta[2]) # r;  /*Estimating function for corrected proportion*/
-        ef_sens = (y - theta[2]) # (1-r);       /*Estimating function for sensitivity*/
-        ef_mat = ef_mean||ef_sens;              /*Stacking the estimating functions*/
-		RETURN(ef_mat);                         /*Return estimating function (n by q matrix)*/
-	FINISH efunc;                               /*End definition of estimating function*/
+	START efunc(theta) global(n, ystar, r);	        /*Start to define estimating function */
+	    ef_mean = (ystar - theta[1]*theta[2]) # r;  /*Estimating function for corrected proportion*/
+        ef_sens = (ystar - theta[2]) # (1-r);       /*Estimating function for sensitivity*/
+        ef_mat = ef_mean||ef_sens;              	/*Stacking the estimating functions*/
+		RETURN(ef_mat);                         	/*Return estimating function (n by q matrix)*/
+	FINISH efunc;                               	/*End definition of estimating function*/
 
-	START eequat(theta);			  			/*Start to define estimating equation (single argument)*/ 
-		ef = efunc(theta);                      /*Call estimating function function*/
-		RETURN(ef[+,]);                  		/*Return column sums, 1 by q vector)*/
-	FINISH eequat;                       		/*End definition of estimating equation*/
+	START eequat(theta);			  				/*Start to define estimating equation (single argument)*/ 
+		ef = efunc(theta);                      	/*Call estimating function function*/
+		RETURN(ef[+,]);                  			/*Return column sums, 1 by q vector)*/
+	FINISH eequat;                       			/*End definition of estimating equation*/
 
 	/***********************************************
 	Root-finding */
 	initial = {0.5, 0.5};              	* Initial parameter values;
-	print q;
 	optn = q || 1;                      * q roots/parameters;
 	tc = j(1, 12, .);                   * Create vector for Termination Criteria options, set all to default using .;
 	tc[6] = 1e-9;                       * Replace 6th option in tc to change default tolerance;
@@ -66,7 +65,7 @@ PROC IML;                            /*All steps are completed in PROC IML*/
 			   theta_hat,               /*... name of output parameters that give the root*/
 			   "eequat",                /*... function to find the roots of*/
 			   initial,                 /*... starting values for root-finding*/
-               optn, ,                    /*... optional arguments for root-finding procedure*/
+               optn, ,                  /*... optional arguments for root-finding procedure*/
                tc);                     /*... update convergence tolerance*/
 
 	/***********************************************
